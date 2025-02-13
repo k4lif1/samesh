@@ -26,7 +26,7 @@ sam_mesh:
   smoothing_threshold_percentage_area: 0.025
   smoothing_iterations: 64
   repartition_cost: 1
-  repartition_lambda: 10
+  repartition_lambda: 5
   repartition_iterations: 1
 
 renderer:
