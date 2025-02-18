@@ -293,19 +293,27 @@ if __name__ == '__main__':
         print('Segmenting ', len(filenames), ' meshes')
         return filenames
 
-    '''
-    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_shape_diameter_function.yaml')
-    filenames = read_filenames('/home/ubuntu/data/backflip-benchmark-remeshed-processed/*.glb')
+    filenames = read_filenames('/home/gtangg12/data/samesh/backflip-benchmark-remeshed-processed/*.glb')
+    #filenames = [Path('/home/gtangg12/data/samesh.backflip-benchmark-remeshed-processed/jacket.glb')]
+    config = OmegaConf.load('/home/gtangg12/samesh/configs/mesh_segmentation_shape_diameter_function.yaml')
+    for i, filename in enumerate(filenames):
+        segment_mesh_sdf(filename, config)
 
-    for filename in filenames:
-        segment_mesh_sdf(filename config)
-    '''
-    
-    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_shape_diameter_function_coseg.yaml')
+    config_original = OmegaConf.load('/home/gtangg12/samesh/configs/mesh_segmentation_shape_diameter_function_coseg.yaml')
     categories = ['candelabra', 'chairs', 'fourleg', 'goblets', 'guitars', 'irons', 'lamps', 'vases']
     for cat in categories:
-        filenames = read_filenames(f'/home/ubuntu/data/coseg/{cat}/*.off')
+        filenames = read_filenames(f'/home/gtangg12/data/samesh/coseg/{cat}/*.off')
         for filename in filenames:
-            config = copy.deepcopy(config)
+            config = copy.deepcopy(config_original)
             config.output = Path(config.output) / cat
             segment_mesh_sdf(filename, config)
+    
+    config_original = OmegaConf.load('/home/gtangg12/samesh/configs/mesh_segmentation_shape_diameter_function_princeton.yaml')
+    filenames = read_filenames('/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/off/*.off')
+    for i, filename in enumerate(filenames):
+        name, extension = filename.stem, filename.suffix[1:]
+        category = (int(name) - 1) // 20 + 1
+        if category in [14]: #[4, 8, 13, 14, 17]:
+            continue
+        config = copy.deepcopy(config_original)
+        segment_mesh_sdf(filename, config)

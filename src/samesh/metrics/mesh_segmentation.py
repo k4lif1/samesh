@@ -190,7 +190,7 @@ def benchmark_dataset_princeton_one(
     mesh = trimesh.load(f'{path_meshes}/{filename}.off')
 
     if load_json:
-        segmentation = seg_from_face2label(f'{path_segmentations}/{filename}_face2label.json')
+        segmentation = seg_from_face2label(f'{path_segmentations}/{filename}/{filename}_face2label.json')
     else:
         with open(f'{path_segmentations}/{filename}.seg', 'r') as f:
             segmentation = np.array([int(x) for x in f.readlines()], dtype=np.uint32)
@@ -242,7 +242,7 @@ def benchmark_dataset_princeton(
     pool = mp.Pool(mp.cpu_count())
     chunks = [
         (path_meshes, path_segmentations, path_segmentations_reference, i, extract_category(i), load_json)
-        for i in range(1, 401) if extract_category(i) not in [13] #, 4, 8, 14, 17]
+        for i in range(1, 401) if extract_category(i) not in [14] #, 4, 8, 13, 17]
     ]
     metrics_list = pool.starmap(benchmark_dataset_princeton_one, chunks)
     metrics = {}
@@ -288,31 +288,44 @@ def benchmark_dataset_coseg(
 
 
 if __name__ == "__main__":
-    '''
+    # metrics1 = benchmark_dataset_princeton(
+    #     path_meshes='/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/off',
+    #     path_segmentations ='/home/gtangg12/samesh/outputs/mesh_segmentation_output_princeton_shape_diameter_function',
+    #     path_segmentations_reference='/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/seg/Benchmark',
+    #     load_json=True
+    # )
+    # metrics2 = benchmark_dataset_princeton(
+    #     path_meshes='/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/off',
+    #     path_segmentations ='/home/gtangg12/samesh/outputs/mesh_segmentation_output_princeton',
+    #     path_segmentations_reference='/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/seg/Benchmark',
+    #     load_json=True
+    # )
+    # print(metrics1)
+    # print(metrics2)
+
     metrics1 = benchmark_dataset_princeton(
-        path_meshes='/home/ubuntu/data/MeshsegBenchmark-1.0/data/off',
-        path_segmentations='/home/ubuntu/data/MeshsegBenchmark-1.0/data/seg/ShapeDiam',
-        path_segmentations_reference='/home/ubuntu/data/MeshsegBenchmark-1.0/data/seg/Benchmark',
+        path_meshes='/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/off',
+        path_segmentations='/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/seg/ShapeDiam',
+        path_segmentations_reference='/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/seg/Benchmark',
     )
     metrics2 = benchmark_dataset_princeton(
-        path_meshes='/home/ubuntu/data/MeshsegBenchmark-1.0/data/off',
-        path_segmentations ='/home/ubuntu/meshseg/tests/mesh_segmentation_output_princeton-dynamic-0.35-6-0.5-fast-1-15',
-        path_segmentations_reference='/home/ubuntu/data/MeshsegBenchmark-1.0/data/seg/Benchmark',
+        path_meshes='/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/off',
+        path_segmentations ='/home/gtangg12/samesh/outputs/mesh_segmentation_output_princeton_dynamic',
+        path_segmentations_reference='/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/seg/Benchmark',
         load_json=True
     )
     print(metrics1)
     print(metrics2)
-    '''
 
-    metrics1 = benchmark_dataset_coseg(
-        path_meshes='/home/ubuntu/data/coseg',
-        path_segmentations='/home/ubuntu/meshseg/tests/mesh_segmentation_output_coseg_shape_diameter_function',
-        path_segmentations_reference='/home/ubuntu/data/coseg',
-    )
-    metrics2 = benchmark_dataset_coseg(
-        path_meshes='/home/ubuntu/data/coseg',
-        path_segmentations='/home/ubuntu/meshseg/tests/mesh_segmentation_output_coseg-dynamic-0.050-6-0.5',
-        path_segmentations_reference='/home/ubuntu/data/coseg',
-    )
-    print(metrics1)
-    print(metrics2)
+    # metrics1 = benchmark_dataset_coseg(
+    #     path_meshes='/home/gtangg12/samesh/data/coseg',
+    #     path_segmentations='/home/gtangg12/samesh/outputs/mesh_segmentation_output_coseg_shape_diameter_function',
+    #     path_segmentations_reference='/home/gtangg12/datacoseg',
+    # )
+    # metrics2 = benchmark_dataset_coseg(
+    #     path_meshes='/home/gtangg12/samesh/data/coseg',
+    #     path_segmentations='/home/gtangg12/samesh/outputs/mesh_segmentation_output_coseg',
+    #     path_segmentations_reference='/home/gtangg12/datacoseg',
+    # )
+    # print(metrics1)
+    # print(metrics2)

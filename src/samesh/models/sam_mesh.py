@@ -292,7 +292,7 @@ class SamModelMesh(nn.Module):
         renders['cmasks'] = cmasks
 
         self.config.cache.mkdir(parents=True)
-        save_items(renders, self.config.cache)
+        #save_items(renders, self.config.cache)
         if visualize_path is not None:
             visualize_items(renders, visualize_path)
         return renders
@@ -533,7 +533,7 @@ class SamModelMesh(nn.Module):
             (tmesh, partition, cost_data, cost_smoothness, self.config.sam_mesh.repartition_iterations, _lambda) 
             for _lambda in lambdas
         ]
-        with mp.Pool(mp.cpu_count()) as pool:
+        with mp.Pool(mp.cpu_count() // 2) as pool:
             refined_partitions = pool.starmap(repartition, chunks)
 
         def compute_cur_labels(part, noise_threshold=10):
@@ -615,6 +615,8 @@ def segment_mesh(filename: Path | str, config: OmegaConf, visualize=False, exten
     config = copy.deepcopy(config)
     config.cache  = Path(config.cache)  / filename.stem
     config.output = Path(config.output) / filename.stem
+    if config.cache.exists():
+        return
 
     model = SamModelMesh(config)
     tmesh = read_mesh(filename, norm=True)
@@ -646,34 +648,38 @@ if __name__ == '__main__':
         print('Segmenting ', len(filenames), ' meshes')
         return filenames
 
-    #filenames = read_filenames('/home/ubuntu/data/backflip-benchmark-remeshed-processed/*.glb')
-    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation.yaml')
-    filenames = [Path('/home/ubuntu/data/backflip-benchmark-remeshed-processed/jacket.glb')]
+    filenames = read_filenames('/home/gtangg12/data/samesh/backflip-benchmark-remeshed-processed/*.glb')
+    config = OmegaConf.load('/home/gtangg12/samesh/configs/mesh_segmentation.yaml')
     for i, filename in enumerate(filenames):
-        segment_mesh(filename, config, visualize=True)
-
-    '''
-    with open('/home/ubuntu/data/MeshsegBenchmark-1.0/util/parameters/nSeg-ByModel.txt') as f:
-        target_labels_dict = {str(i): int(line) for i, line in enumerate(f.readlines(), 1)}
+        segment_mesh(filename, config, visualize=False)
     
-    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_princeton.yaml')
-    filenames = read_filenames('/home/ubuntu/data/MeshsegBenchmark-1.0/data/off/*.off')
+    config_original = OmegaConf.load('/home/gtangg12/samesh/configs/mesh_segmentation_coseg.yaml')
+    categories = ['candelabra', 'chairs', 'fourleg', 'goblets', 'guitars', 'irons', 'lamps', 'vases']
+    for cat in categories:
+        filenames = read_filenames(f'/home/gtangg12/data/samesh/coseg/{cat}/*.off')
+        for filename in filenames:
+            config = copy.deepcopy(config_original)
+            config.output = Path(config.output) / cat
+            config.cache  = Path(config.cache)  / cat
+            segment_mesh(filename, config, visualize=False)
+
+    config = OmegaConf.load('/home/gtangg12/samesh/configs/mesh_segmentation_princeton.yaml')
+    filenames = read_filenames('/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/off/*.off')
     for i, filename in enumerate(filenames):
         name, extension = filename.stem, filename.suffix[1:]
         category = (int(name) - 1) // 20 + 1
-        #if category not in [4, 8, 14, 17]:
-        #    continue
-        segment_mesh(filename, config, visualize=True, target_labels=target_labels_dict[name])
-    '''
+        if category in [14]: #[4, 8, 13, 14, 17]:
+            continue
+        segment_mesh(filename, config, visualize=False)
 
-    '''
-    config = OmegaConf.load('/home/ubuntu/meshseg/configs/mesh_segmentation_coseg.yaml')
-    categories = ['candelabra', 'chairs', 'fourleg', 'goblets', 'guitars', 'irons', 'lamps', 'vases']
-    for cat in categories:
-        filenames = read_filenames(f'/home/ubuntu/data/coseg/{cat}/*.off')
-        for filename in filenames:
-            config = copy.deepcopy(config)
-            config.output = Path(config.output) / cat
-            config.cache  = Path(config.cache)  / cat
-            segment_mesh(filename, config, visualize=True)
-    '''
+    with open('/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/util/parameters/nSeg-ByModel.txt') as f:
+        target_labels_dict = {str(i): int(line) for i, line in enumerate(f.readlines(), 1)}
+    
+    config = OmegaConf.load('/home/gtangg12/samesh/configs/mesh_segmentation_princeton_dynamic.yaml')
+    filenames = read_filenames('/home/gtangg12/data/samesh/MeshsegBenchmark-1.0/data/off/*.off')
+    for i, filename in enumerate(filenames):
+        name, extension = filename.stem, filename.suffix[1:]
+        category = (int(name) - 1) // 20 + 1
+        if category in [14]: #[4, 8, 13, 14, 17]:
+            continue
+        segment_mesh(filename, config, visualize=False, target_labels=target_labels_dict[name])
