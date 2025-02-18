@@ -1,7 +1,7 @@
 ---
-cache: /home/gtangg12/samesh/outputs/mesh_segmentation_cache_coseg
+cache: /home/gtangg12/samesh/outputs/mesh_segmentation_cache_princeton_dynamic
 cache_overwrite: False
-output: /home/gtangg12/samesh/outputs/mesh_segmentation_output_coseg
+output: /home/gtangg12/samesh/outputs/mesh_segmentation_output_princeton_dynamic
 
 sam:
   sam:
@@ -21,12 +21,15 @@ sam_mesh:
   use_modes: ['sdf', 'norms']
   min_area: 1024
   connections_bin_resolution: 100
-  connections_bin_threshold_percentage: 0.05
+  connections_bin_threshold_percentage: 0.125
   smoothing_threshold_percentage_size: 0.025
   smoothing_threshold_percentage_area: 0.025
   smoothing_iterations: 64
   repartition_cost: 1
-  repartition_lambda: 5
+  repartition_lambda: 6
+  repartition_lambda_tolerance: 1
+  repartition_lambda_lb: 1
+  repartition_lambda_ub: 15
   repartition_iterations: 1
 
 renderer:
