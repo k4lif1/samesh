@@ -180,9 +180,9 @@ class SamModelMesh(nn.Module):
         """
         super().__init__()
         self.config = config
-        self.config.cache = Path(config.cache)
+        self.config.cache = Path(config.cache) if config.cache is not None else None
         self.renderer = Renderer(config.renderer)
-        if use_sam and (not self.config.cache.exists() or self.config.cache_overwrite):
+        if use_sam and (self.config.cache is None or not self.config.cache.exists() or self.config.cache_overwrite):
             self.sam = Sam2Model(config.sam, device=device)
 
     def load(self, scene: Scene, mesh_graph=True):
@@ -201,7 +201,7 @@ class SamModelMesh(nn.Module):
     def render(self, scene: Scene, visualize_path=None) -> dict[str, NumpyTensor]:
         """
         """
-        if self.config.cache.exists():
+        if self.config.cache is not None and self.config.cache.exists():
             if self.config.cache_overwrite:
                 shutil.rmtree(self.config.cache)
             else:
@@ -291,8 +291,9 @@ class SamModelMesh(nn.Module):
         renders['bmasks'] = bmasks
         renders['cmasks'] = cmasks
 
-        self.config.cache.mkdir(parents=True)
-        #save_items(renders, self.config.cache)
+        if self.config.cache is not None:
+            self.config.cache.mkdir(parents=True)
+            save_items(renders, self.config.cache)
         if visualize_path is not None:
             visualize_items(renders, visualize_path)
         return renders
@@ -301,8 +302,7 @@ class SamModelMesh(nn.Module):
         """
         """
         be, en = 0, len(renders['faces'])
-        exclude = {}
-        renders = {k: [v[i] for i in range(be, en) if i not in exclude] for k, v in renders.items()}
+        renders = {k: [v[i] for i in range(be, en) if len(v)] for k, v in renders.items()}
 
         print('Computing face2label for each view on ', mp.cpu_count(), ' cores')
         label_sequence_count = 1 # background is 0
@@ -315,7 +315,7 @@ class SamModelMesh(nn.Module):
         ):
             labels = np.unique(cmask)
             labels = labels[labels != 0] # remove background
-            args.append((labels, faceid, cmask, norms, pose, label_sequence_count))
+            args.append((labels, faceid, cmask, norms, pose, label_sequence_count, self.config.sam_mesh.get('face2label_threshold', 16)))
             label_sequence_count += len(labels)
         
         with mp.Pool(mp.cpu_count()) as pool:
@@ -326,7 +326,7 @@ class SamModelMesh(nn.Module):
         for i, face2label1 in enumerate(face2label_views):
             for j, face2label2 in enumerate(face2label_views):
                 if i < j:
-                    args.append((i, j, face2label1, face2label2))
+                    args.append((i, j, face2label1, face2label2, self.config.sam_mesh.get('connections_threshold', 32)))
         
         with mp.Pool(mp.cpu_count()) as pool:
             partial_connections = pool.starmap(compute_connections, args)
@@ -343,7 +343,7 @@ class SamModelMesh(nn.Module):
 
         counter_lens = [len(counter) for counter in connections_ratios.values()]
         counter_lens = sorted(counter_lens)
-        counter_lens_threshold = max(np.percentile(counter_lens, 95), 16)
+        counter_lens_threshold = max(np.percentile(counter_lens, 95), self.config.sam_mesh.get('counter_lens_threshold_min', 16))
         print('Counter lens threshold: ', counter_lens_threshold)
         removed = []
         for label, counter in connections_ratios.items():
@@ -403,9 +403,9 @@ class SamModelMesh(nn.Module):
         connection_graph = igraph.Graph(edges=connections, directed=False)
         connection_graph.simplify()
         communities = connection_graph.community_leiden(resolution_parameter=0)
-        #for comm in communities:
-        #    print(comm)
-        #exit()
+        # for comm in communities:
+        #     print(comm)
+        # exit()
         label2label_consistent = {}
         comm_count = 0
         for comm in communities:
@@ -482,11 +482,6 @@ class SamModelMesh(nn.Module):
     def split(self, face2label_consistent: dict) -> dict:
         """
         """
-        # inject unlabeled faces after smoothing
-        for face in range(len(self.renderer.tmesh.faces)):
-            if face not in face2label_consistent:
-                face2label_consistent[face] = 0
-        
         components = self.label_components(face2label_consistent)
 
         labels_seen = set()
@@ -576,6 +571,10 @@ class SamModelMesh(nn.Module):
         renders = self.render(scene, visualize_path=visualize_path)
         face2label_consistent = self.lift(renders)
         face2label_consistent = self.smooth(face2label_consistent)
+        # inject unlabeled faces after smoothing
+        for face in range(len(self.renderer.tmesh.faces)):
+            if face not in face2label_consistent:
+                face2label_consistent[face] = 0
         face2label_consistent = self.split (face2label_consistent) # needed to label all faces for repartition
         face2label_consistent = self.smooth_repartition_faces(face2label_consistent, target_labels=target_labels)
         face2label_consistent = {int(k): int(v) for k, v in face2label_consistent.items()} # ensure serialization
@@ -613,10 +612,8 @@ def segment_mesh(filename: Path | str, config: OmegaConf, visualize=False, exten
     print('Segmenting mesh with SAMesh: ', filename)
     filename = Path(filename)
     config = copy.deepcopy(config)
-    config.cache  = Path(config.cache)  / filename.stem
+    config.cache  = Path(config.cache)  / filename.stem if "cache" in config else None
     config.output = Path(config.output) / filename.stem
-    if config.cache.exists():
-        return
 
     model = SamModelMesh(config)
     tmesh = read_mesh(filename, norm=True)
@@ -660,7 +657,8 @@ if __name__ == '__main__':
         for filename in filenames:
             config = copy.deepcopy(config_original)
             config.output = Path(config.output) / cat
-            config.cache  = Path(config.cache)  / cat
+            if "cache" in config:
+                config.cache  = Path(config.cache) / cat
             segment_mesh(filename, config, visualize=False)
 
     config = OmegaConf.load('/home/gtangg12/samesh/configs/mesh_segmentation_princeton.yaml')
