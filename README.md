@@ -8,6 +8,9 @@ Examples of running SAMesh on our curated dataset:
 Pipeline of SAMesh:
 ![Pipeline of SAMesh](./assets/samesh_pipeline.png)
 
+Samesh handles untextured meshes, and it does so by rendering different modalities before applying Segment Anything (`mode` parameter in config).
+![Rendered Modalities](./assets/samesh_modalities.png)
+
 
 ## Installation
 
