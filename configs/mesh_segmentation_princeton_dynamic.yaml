@@ -5,7 +5,7 @@ output: /home/gtangg12/samesh/outputs/mesh_segmentation_output_princeton_dynamic
 
 sam:
   sam:
-    checkpoint: /home/gtangg12/samesh/checkpoints/sam2_hiera_large.pt
+    checkpoint: /content/samesh/checkpoints/sam2_hiera_large.pt
     model_config: sam2_hiera_l.yaml
     auto: True
     ground: False
@@ -18,7 +18,7 @@ sam:
       stability_score_offset: 1.0
 
 sam_mesh:
-  use_modes: ['sdf', 'norms']
+  use_modes: ["sdf", "norms"]
   min_area: 1024
   connections_bin_resolution: 100
   connections_bin_threshold_percentage: 0.125
@@ -37,5 +37,5 @@ renderer:
   camera_generation_method: icosahedron #octohedron
   renderer_args:
     interpolate_norms: True
-  sampling_args: {radius: 2}
+  sampling_args: { radius: 2 }
   lighting_args: {}
