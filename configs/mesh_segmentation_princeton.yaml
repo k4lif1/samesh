@@ -1,7 +1,7 @@
 ---
-cache: /home/gtangg12/samesh/outputs/mesh_segmentation_cache_princeton
+cache: /content/samesh/outputs/mesh_segmentation_cache_princeton
 cache_overwrite: False
-output: /home/gtangg12/samesh/outputs/mesh_segmentation_output_princeton
+output: /content/samesh/outputs/mesh_segmentation_output_princeton
 
 sam:
   sam:

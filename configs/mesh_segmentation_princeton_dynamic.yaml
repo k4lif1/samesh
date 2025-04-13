@@ -1,7 +1,7 @@
 ---
-cache: /home/gtangg12/samesh/outputs/mesh_segmentation_cache_princeton_dynamic
+cache: /content/samesh/outputs/mesh_segmentation_cache_princeton_dynamic
 cache_overwrite: False
-output: /home/gtangg12/samesh/outputs/mesh_segmentation_output_princeton_dynamic
+output: /content/samesh/outputs/mesh_segmentation_output_princeton_dynamic
 
 sam:
   sam:

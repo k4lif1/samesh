@@ -1,7 +1,7 @@
 ---
-cache: /home/gtangg12/samesh/outputs/mesh_segmentation_cache_coseg
+cache: /content/samesh/outputs/mesh_segmentation_cache_coseg
 cache_overwrite: False
-output: /home/gtangg12/samesh/outputs/mesh_segmentation_output_coseg
+output: /content/samesh/outputs/mesh_segmentation_output_coseg
 
 sam:
   sam:
